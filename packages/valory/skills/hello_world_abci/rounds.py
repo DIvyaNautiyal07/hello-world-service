@@ -75,7 +75,7 @@ class SynchronizedData(
         """Get the most voted print count."""
         return cast(
             int,
-            self.db.get_strict("print_count")
+            self.db.get("print_count", 0)
         )
 
 class HelloWorldABCIAbstractRound(AbstractRound, ABC):
@@ -157,10 +157,12 @@ class PrintCountRound(CollectSameUntilThresholdRound, HelloWorldABCIAbstractRoun
 
     payload_class = PrintCountPayload
     def end_block(self) -> Optional[Tuple[BaseSynchronizedData, Event]]:
+
         if self.threshold_reached:
             synchronized_data = self.synchronized_data.update(
                 participants=tuple(sorted(self.collection)),
                 print_count= self.most_voted_payload,
+                #print_count = cast(PrintCountPayload, list(self.collection.values())[0]).print_count,
                 synchronized_data_class=SynchronizedData,
             )
             return synchronized_data, Event.DONE

@@ -29,5 +29,7 @@ transition_func:
     (SelectKeeperRound, NO_MAJORITY): RegistrationRound
     (SelectKeeperRound, ROUND_TIMEOUT): RegistrationRound
     (PrintCountRound, DONE): ResetAndPauseRound
+    (PrintCountRound, NO_MAJORITY): RegistrationRound
+    (PrintCountRound, ROUND_TIMEOUT): RegistrationRound
     (SelectKeeperRound, NO_MAJORITY): RegistrationRound
     (SelectKeeperRound, ROUND_TIMEOUT): RegistrationRound
