@@ -186,7 +186,6 @@ class PrintMessageBehaviour(HelloWorldABCIBaseBehaviour, ABC):
         - Wait until ABCI application transitions to the next round.
         - Go to the next behaviour (set done event).
         """
-
         if (
             self.context.agent_address
             == self.synchronized_data.most_voted_keeper_address
@@ -224,7 +223,7 @@ class PrintCountBehaviour(HelloWorldABCIBaseBehaviour, ABC):
         - Go to the next behaviour (set done event).
         """
 
-        print_count = self.synchronized_data.print_count
+        print_count = self.synchronized_data.period_count
         print_count += 1
 
         message = f"The message has been printed {print_count} times."
@@ -234,7 +233,6 @@ class PrintCountBehaviour(HelloWorldABCIBaseBehaviour, ABC):
 
         yield from self.send_a2a_transaction(payload)
         yield from self.wait_until_round_end()
-
         self.set_done()
 
 

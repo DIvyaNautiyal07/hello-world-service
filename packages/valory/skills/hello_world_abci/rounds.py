@@ -31,6 +31,8 @@ from packages.valory.skills.abstract_round_abci.base import (
     CollectDifferentUntilAllRound,
     CollectSameUntilAllRound,
     CollectSameUntilThresholdRound,
+    CollectionRound,
+    DeserializedCollection,
     get_name,
 )
 from packages.valory.skills.hello_world_abci.payloads import (
@@ -72,12 +74,19 @@ class SynchronizedData(
     
     @property
     def print_count(self) -> int:
-        """Get the most voted print count."""
+        """Get the print count."""
         return cast(
             int,
-            self.db.get("print_count", 0)
+            self.db.get("print_count",0)
         )
-
+    
+    @property
+    def participant_to_print_count(self) -> DeserializedCollection:
+        """Check whether keeper is set."""
+        serialized = self.db.get_strict("participant_to_print_count")
+        deserialized = CollectionRound.deserialize_collection(serialized)
+        return cast(DeserializedCollection, deserialized)
+    
 class HelloWorldABCIAbstractRound(AbstractRound, ABC):
     """Abstract round for the Hello World ABCI skill."""
 
@@ -156,14 +165,20 @@ class PrintCountRound(CollectSameUntilThresholdRound, HelloWorldABCIAbstractRoun
     """A round in which the keeper prints the message"""
 
     payload_class = PrintCountPayload
-    def end_block(self) -> Optional[Tuple[BaseSynchronizedData, Event]]:
+    synchronized_data_class = SynchronizedData
+    done_event = Event.DONE
+    no_majority_event = Event.NO_MAJORITY
+    collection_key = get_name(SynchronizedData.participant_to_print_count)
+    selection_key = get_name(SynchronizedData.print_count)
 
+    def end_block(self) -> Optional[Tuple[BaseSynchronizedData, Event]]:
         if self.threshold_reached:
-            synchronized_data = self.synchronized_data.update(
-                participants=tuple(sorted(self.collection)),
-                print_count= self.most_voted_payload,
-                #print_count = cast(PrintCountPayload, list(self.collection.values())[0]).print_count,
-                synchronized_data_class=SynchronizedData,
+            synchronized_data = cast(
+                SynchronizedData,
+                self.synchronized_data.update(
+                    synchronized_data_class=self.synchronized_data_class,
+                    **{get_name(SynchronizedData.print_count): self.most_voted_payload},
+                ),
             )
             return synchronized_data, Event.DONE
         return None
@@ -256,3 +271,4 @@ class HelloWorldAbciApp(AbciApp[Event]):
         Event.ROUND_TIMEOUT: 30.0,
         Event.RESET_TIMEOUT: 30.0,
     }
+
